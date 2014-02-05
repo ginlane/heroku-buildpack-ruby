@@ -66,6 +66,43 @@ WARNING
     "tmp/cache/assets"
   end
 
+  def run_db_migrate_rake_task
+    instrument "rails4.run_db_migrate_rake_task" do
+      log("db_migrate") do
+
+        migrate = rake.task("db:migrate")
+        return true unless migrate.is_defined?
+
+        topic("Preparing app for database migration")
+
+        if user_env_hash.empty?
+          default_env = {
+            "RAILS_GROUPS" => ENV["RAILS_GROUPS"] || "assets",
+            "RAILS_ENV"    => ENV["RAILS_ENV"]    || "production",
+            "DATABASE_URL" => ENV["DATABASE_URL"] || default_database_url
+          }
+        else
+          default_env = {
+            "RAILS_GROUPS" => "assets",
+            "RAILS_ENV"    => "production",
+            "DATABASE_URL" => default_database_url
+          }
+        end
+        rake_options = {env: default_env.merge(user_env_hash) }
+
+        migrate.invoke(rake_options)
+
+        if migrate.success?
+          log "db_migrate", :status => "success"
+          puts "Database migration completed (#{"%.2f" % migrate.time}s)"
+        else
+          log "db_migrate", :status => "failure"
+          error "Database migration failed."
+        end
+      end
+    end
+  end
+  
   def run_assets_precompile_rake_task
     instrument "rails4.run_assets_precompile_rake_task" do
       log("assets_precompile") do
