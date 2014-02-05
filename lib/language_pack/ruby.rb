@@ -95,7 +95,6 @@ class LanguagePack::Ruby < LanguagePack::Base
         build_bundler
         create_database_yml
         install_binaries
-        run_db_migrate_rake_task
       end
       super
     end
